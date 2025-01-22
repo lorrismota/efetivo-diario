@@ -1,0 +1,137 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efetivo Diário - TERPAZ VISEU</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .header {
+            font-weight: bold;
+        }
+        .role-group {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>Efetivo Diário - TERPAZ VISEU</h1>
+        <form id="myForm">
+            <h2>Funções e Quantidades</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th class="header">Função</th>
+                        <th class="header">Presente</th>
+                        <th class="header">Ausente</th>
+                    </tr>
+                </thead>
+                <tbody id="roles">
+                    <!-- Lista de funções gerada dinamicamente -->
+                </tbody>
+            </table>
+
+            <h3>Total de Pessoas Presentes:</h3>
+            <p id="total">0</p>
+
+            <button type="button" onclick="generateList()">Gerar Lista</button>
+            <button type="button" onclick="copyToClipboard()">Copiar Texto</button>
+        </form>
+
+        <h2>Resultado:</h2>
+        <textarea id="result" readonly></textarea>
+    </div>
+
+    <script>
+        const roles = [
+            "TOPOGRÁFO", "PEDREIRO", "CARPINTEIRO", "ARMADOR", 
+            "ELETRICISTA", "ENCANADOR", "SOLDADOR", 
+            "MONTADOR DE EST. METÁLICA", "MONTADOR DE ANDAIME", 
+            "PINTOR", "GESSEIRO", "SERVENTE", 
+            "OPERADOR DE RETROESCAVADEIRA", "SINALEIRO", 
+            "MOTORISTA DE CAMINHÃO MUNCK", "OPERADOR DE AUTO BETONEIRA", 
+            "OPERADOR DE CAMINHÃO PIPA", "FAXINEIRA", 
+            "OPERADOR DE BETONEIRA",
+        ];
+
+        // Gerar os campos para cada função com colunas de quantidade presente e ausente
+        const rolesContainer = document.getElementById('roles');
+        roles.forEach(role => {
+            const row = document.createElement('tr');
+            row.className = 'role-group';
+            row.innerHTML = `
+                <td>${role}</td>
+                <td><input type="number" id="${role}_presente" name="${role}_presente" min="0" value="0" placeholder="Presente"></td>
+                <td><input type="number" id="${role}_ausente" name="${role}_ausente" min="0" value="0" placeholder="Ausente"></td>
+            `;
+            rolesContainer.appendChild(row);
+        });
+
+        // Função para gerar a lista formatada
+        function generateList() {
+            let totalPresent = 0;
+            let totalAbsent = 0;
+            let presentList = "Efetivo Presente:\n\n";
+            let absentList = "Efetivo Ausente:\n\n";
+            
+            roles.forEach(role => {
+                const presente = parseInt(document.getElementById(role + '_presente').value) || 0;
+                const ausente = parseInt(document.getElementById(role + '_ausente').value) || 0;
+                
+                // Adiciona à lista de presentes se houver quantidade
+                if (presente > 0) {
+                    presentList += `- ${role}: ${presente}\n\n`;
+                    totalPresent += presente;
+                }
+
+                // Adiciona à lista de ausentes se houver quantidade
+                if (ausente > 0) {
+                    absentList += `- ${role}: ${ausente}\n`;
+                    totalAbsent += ausente;
+                }
+            });
+
+            // Resumo final com total sem espaço entre presente e ausente
+const resultText = `Efetivo Diário - TERPAZ VISEU\n\n${presentList}${absentList}\nResumo\n\nTotal de pessoas presentes: ${totalPresent}\nTotal de pessoas ausentes: ${totalAbsent}\nTotal MOD (presentes + ausentes): ${totalPresent + totalAbsent}`;
+
+
+
+            document.getElementById('result').value = resultText;
+            document.getElementById('total').innerText = totalPresent;
+        }
+
+        // Função para copiar o texto gerado
+        function copyToClipboard() {
+            const resultText = document.getElementById('result');
+            resultText.select();
+            resultText.setSelectionRange(0, 99999); // Para dispositivos móveis
+            navigator.clipboard.writeText(resultText.value).then(() => {
+                alert("Texto copiado para a área de transferência!");
+            });
+        }
+    </script>
+</body>
+</html>
