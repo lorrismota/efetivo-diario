@@ -1,0 +1,191 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Efetivo Diário - TERPAZ VISEU</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+        }
+        .container {
+            max-width: 800px;
+            margin: auto;
+        }
+        img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 20px;
+        }
+        textarea {
+            width: 100%;
+            height: 200px;
+        }
+        table {
+            width: 100%;
+            margin-bottom: 20px;
+            border-collapse: collapse;
+        }
+        th, td {
+            padding: 8px;
+            text-align: center;
+            border: 1px solid #ddd;
+        }
+        .header {
+            font-weight: bold;
+        }
+        .role-group {
+            text-align: center;
+        }
+    </style>
+</head>
+<body>
+    <!-- Imagem no topo -->
+    <img src="assets/logo.png" alt="Minha Imagem" style="display: block; margin: 0 auto; max-width: 200px;">
+
+    <div class="container">
+        <h1>Efetivo Diário - TERPAZ VISEU</h1>
+        <form id="myForm">
+            <h2>Funções e Quantidades</h2>
+
+            <table>
+                <thead>
+                    <tr>
+                        <th class="header">Função</th>
+                        <th class="header">Presente</th>
+                        <th class="header">Ausente</th>
+                        <th class="header">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="roles">
+                    <!-- Lista de funções gerada dinamicamente -->
+                </tbody>
+            </table>
+
+            <button type="button" onclick="addFunction()">Adicionar Função</button>
+            <button type="button" onclick="generateList()">Gerar Lista</button>
+            <button type="button" onclick="copyToClipboard()">Copiar Texto</button>
+
+            <h3>Total de Pessoas Presentes:</h3>
+            <p id="total">0</p>
+        </form>
+
+        <h2>Resultado:</h2>
+        <textarea id="result" readonly></textarea>
+    </div>
+
+    <script>
+        const rolesContainer = document.getElementById('roles');
+
+        // Funções padrão
+        const roles = [
+            "TOPOGRÁFO", "PEDREIRO", "CARPINTEIRO", "ARMADOR", 
+            "ELETRICISTA", "ENCANADOR", "SOLDADOR", 
+            "MONTADOR DE EST. METÁLICA", "MONTADOR DE ANDAIME", 
+            "PINTOR", "GESSEIRO", "SERVENTE", 
+            "OPERADOR DE RETROESCAVADEIRA", "SINALEIRO", 
+            "MOTORISTA DE CAMINHÃO MUNCK", "OPERADOR DE AUTO BETONEIRA", 
+            "OPERADOR DE CAMINHÃO PIPA", "FAXINEIRA", 
+            "OPERADOR DE BETONEIRA",
+        ];
+
+        // Adiciona funções iniciais à tabela
+        function populateRoles() {
+            roles.forEach(role => addRoleToTable(role));
+        }
+
+        // Adiciona uma função específica à tabela
+        function addRoleToTable(role) {
+            const row = document.createElement('tr');
+            row.className = 'role-group';
+            row.id = `row-${role}`; // Identificador único para a linha
+            row.innerHTML = `
+                <td>${role}</td>
+                <td><input type="number" id="${role}_presente" name="${role}_presente" min="0" value="0" placeholder="Presente"></td>
+                <td><input type="number" id="${role}_ausente" name="${role}_ausente" min="0" value="0" placeholder="Ausente"></td>
+                <td><button type="button" onclick="removeFunction('${role}')">Remover</button></td>
+            `;
+            rolesContainer.appendChild(row);
+        }
+
+        // Função para adicionar nova função dinamicamente
+        function addFunction() {
+            const newRole = prompt("Digite o nome da nova função:");
+            if (newRole && newRole.trim() !== "") {
+                const formattedRole = newRole.toUpperCase();
+                if (!roles.includes(formattedRole)) {
+                    roles.push(formattedRole);
+                    addRoleToTable(formattedRole);
+                } else {
+                    alert("Essa função já existe na tabela.");
+                }
+            } else {
+                alert("O nome da função não pode estar vazio!");
+            }
+        }
+
+        // Função para remover uma função da tabela
+        function removeFunction(role) {
+            if (confirm(`Tem certeza que deseja remover a função "${role}"?`)) {
+                const index = roles.indexOf(role);
+                if (index > -1) {
+                    roles.splice(index, 1); // Remove a função do array
+                    const row = document.getElementById(`row-${role}`);
+                    if (row) {
+                        rolesContainer.removeChild(row); // Remove a linha da tabela
+                    }
+                }
+            }
+        }
+
+        // Função para gerar a lista formatada
+        function generateList() {
+            let totalPresent = 0;
+            let totalAbsent = 0;
+            let presentList = "*Efetivo Presente:*\n";
+            let absentList = "*Efetivo Ausente:*\n";
+            
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('pt-BR', {
+                day: '2-digit',
+                month: '2-digit',
+                year: 'numeric',
+            });
+
+            roles.forEach(role => {
+                const presente = parseInt(document.getElementById(role + '_presente').value) || 0;
+                const ausente = parseInt(document.getElementById(role + '_ausente').value) || 0;
+
+                if (presente > 0) {
+                    presentList += `${role}: ${presente}\n`;
+                    totalPresent += presente;
+                }
+
+                if (ausente > 0) {
+                    absentList += `${role}: ${ausente}\n`;
+                    totalAbsent += ausente;
+                }
+            });
+
+            const resultText = `*Efetivo Diário - TERPAZ VISEU (${formattedDate})*\n\n${presentList}\n${absentList}\n*Resumo*\nTotal de pessoas presentes: ${totalPresent}\nTotal de pessoas ausentes: ${totalAbsent}\nTotal MOD (presentes + ausentes): ${totalPresent + totalAbsent}`;
+            document.getElementById('result').value = resultText;
+            document.getElementById('total').innerText = totalPresent;
+        }
+
+        // Função para copiar o texto gerado
+        function copyToClipboard() {
+            const resultText = document.getElementById('result');
+            resultText.select();
+            resultText.setSelectionRange(0, 99999); // Para dispositivos móveis
+            navigator.clipboard.writeText(resultText.value).then(() => {
+                alert("Texto copiado, agora é só colar no grupo de efetivo no WhatsApp!");
+            });
+        }
+
+        // Inicializar funções padrão
+        populateRoles();
+    </script>
+</body>
+</html>
+
