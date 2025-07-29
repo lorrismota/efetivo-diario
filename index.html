@@ -1,8 +1,8 @@
 <!DOCTYPE html>
 <html lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
     <title>Efetivo Diário - TERPAZ VISEU</title>
     <style>
         body {
@@ -10,7 +10,7 @@
             margin: 20px;
         }
         .container {
-            max-width: 800px;
+            max-width: 900px;
             margin: auto;
         }
         img {
@@ -44,17 +44,22 @@
             font-size: 14px;
             color: #555;
         }
-        </style>
+        .button-group {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-bottom: 20px;
+        }
+    </style>
 </head>
 <body>
     <!-- Imagem no topo -->
-    <img src="assets/logo.png" alt="Minha Imagem" style="display: block; margin: 0 auto; max-width: 200px;">
+    <img src="assets/logo.png" alt="Minha Imagem" style="display: block; margin: 0 auto; max-width: 200px;" />
 
     <div class="container">
         <h1>Efetivo Diário - TERPAZ VISEU</h1>
         <form id="myForm">
-            <h2>Funções e Quantidades</h2>
-
+            <h2>Funções MOD (Mão de Obra Direta)</h2>
             <table>
                 <thead>
                     <tr>
@@ -65,138 +70,195 @@
                     </tr>
                 </thead>
                 <tbody id="roles">
-                    <!-- Lista de funções gerada dinamicamente -->
+                    <!-- MOD gerado dinamicamente -->
                 </tbody>
             </table>
 
-            <button type="button" onclick="addFunction()">Adicionar Função</button>
-            <button type="button" onclick="generateList()">Gerar Lista</button>
-            <button type="button" onclick="copyToClipboard()">Copiar Texto</button>
+            <!-- Bloco da MOI será adicionado via script -->
 
-            <h3>Total de Pessoas Presentes:</h3>
-            <p id="total">0</p>
+            
         </form>
-
-        <h2>Resultado:</h2>
+<h3>Total de Pessoas Presentes (MOD + MOI):</h3>
+            <p id="total">0</p>
+			        <h2>Resultado:</h2>
+					
         <textarea id="result" readonly></textarea>
     </div>
-    
- <!-- Rodapé -->
+
+    <!-- Rodapé -->
     <footer>
         Desenvolvido por Luiz Augusto Mota
     </footer>
-    
-    <script>
-        const rolesContainer = document.getElementById('roles');
 
-        // Funções padrão
-        const roles = [
-            "TOPOGRÁFO", "PEDREIRO", "CARPINTEIRO", "ARMADOR", 
-            "ELETRICISTA", "ENCANADOR", "SOLDADOR", 
-            "MONTADOR DE EST. METÁLICA", "MONTADOR DE ANDAIME", 
-            "PINTOR", "GESSEIRO", "SERVENTE", 
-            "OPERADOR DE RETROESCAVADEIRA", "SINALEIRO", 
-            "MOTORISTA DE CAMINHÃO MUNCK", "OPERADOR DE AUTO BETONEIRA", 
-            "OPERADOR DE CAMINHÃO PIPA", "FAXINEIRA", 
-            "OPERADOR DE BETONEIRA", "AUXILIAR DE LABORATORISTA", "VIGIA", "AUXILIAR DE TOPOGRÁFO"
+    <script>
+        const rolesMODContainer = document.getElementById('roles');
+
+        const moiContainer = document.createElement('div');
+        moiContainer.innerHTML = `
+            <h2>Funções MOI (Mão de Obra Indireta)</h2>
+            <table>
+                <thead>
+                    <tr>
+                        <th class="header">Função</th>
+                        <th class="header">Presente</th>
+                        <th class="header">Ausente</th>
+                        <th class="header">Ações</th>
+                    </tr>
+                </thead>
+                <tbody id="rolesMOI">
+                    <!-- Lista de funções MOI -->
+                </tbody>
+            </table>
+
+            <div class="button-group">
+                <button type="button" onclick="addFunctionMOI()">Adicionar Função (MOI)</button>
+                <button type="button" onclick="generateList()">Gerar Lista</button>
+                <button type="button" onclick="copyToClipboard()">Copiar Texto</button>
+            </div>
+        `;
+        document.querySelector('#myForm').appendChild(moiContainer);
+
+        const rolesMOIContainer = document.getElementById('rolesMOI');
+
+        const rolesMOD = [
+            "TOPOGRÁFO", "PEDREIRO", "CARPINTEIRO", "ARMADOR",
+            "ELETRICISTA", "ENCANADOR", "SOLDADOR",
+            "MONTADOR DE EST. METÁLICA", "MONTADOR DE ANDAIME",
+            "PINTOR", "GESSEIRO", "SERVENTE",
+            "OPERADOR DE RETROESCAVADEIRA", "SINALEIRO",
+             "AUX. DE LABORATORISTA", "FAXINEIRA",
+            "OPERADOR DE BETONEIRA",
         ];
 
-        // Adiciona funções iniciais à tabela
-        function populateRoles() {
-            roles.forEach(role => addRoleToTable(role));
-        }
+        const rolesMOI = [
+            "ENGENHEIRO RESIDENTE", "ENGENHEIRO DE PLANEJAMENTO", "ENGENHEIRO DE QUALIDADE",
+            "ENGENHEIRO DE MEDIÇÃO", "MESTRE DE OBRA", "TÉC. DE SEGURANÇA", "ENCARREGADO",
+			"APONTADOR", "COMPRADOR", "ALMOXARIFE", "AUX. DE ALMOXARIFE", "ASSIS. ADMINISTRATIVO",
+			"AUX. ADMINISTRATIVO", "VIGIA"
+        ];
 
-        // Adiciona uma função específica à tabela
-        function addRoleToTable(role) {
+        function addRoleToTable(role, container, group, removeFunctionName) {
             const row = document.createElement('tr');
             row.className = 'role-group';
-            row.id = `row-${role}`; // Identificador único para a linha
+            row.id = `row-${group}-${role}`;
             row.innerHTML = `
                 <td>${role}</td>
-                <td><input type="number" id="${role}_presente" name="${role}_presente" min="0" value="0" placeholder="Presente"></td>
-                <td><input type="number" id="${role}_ausente" name="${role}_ausente" min="0" value="0" placeholder="Ausente"></td>
-                <td><button type="button" onclick="removeFunction('${role}')">Remover</button></td>
+                <td><input type="number" id="${group}_${role}_presente" min="0" value="0"></td>
+                <td><input type="number" id="${group}_${role}_ausente" min="0" value="0"></td>
+                <td><button type="button" onclick="${removeFunctionName}('${role}')">Remover</button></td>
             `;
-            rolesContainer.appendChild(row);
+            container.appendChild(row);
         }
 
-        // Função para adicionar nova função dinamicamente
-        function addFunction() {
-            const newRole = prompt("Digite o nome da nova função:");
+        function populateRoles() {
+            rolesMOD.forEach(role => addRoleToTable(role, rolesMODContainer, 'MOD', 'removeFunctionMOD'));
+            rolesMOI.forEach(role => addRoleToTable(role, rolesMOIContainer, 'MOI', 'removeFunctionMOI'));
+        }
+
+        function addFunctionMOD() {
+            const newRole = prompt("Digite o nome da nova função (MOD):");
             if (newRole && newRole.trim() !== "") {
                 const formattedRole = newRole.toUpperCase();
-                if (!roles.includes(formattedRole)) {
-                    roles.push(formattedRole);
-                    addRoleToTable(formattedRole);
+                if (!rolesMOD.includes(formattedRole)) {
+                    rolesMOD.push(formattedRole);
+                    addRoleToTable(formattedRole, rolesMODContainer, 'MOD', 'removeFunctionMOD');
                 } else {
-                    alert("Essa função já existe na tabela.");
+                    alert("Essa função já existe na MOD.");
                 }
-            } else {
-                alert("O nome da função não pode estar vazio!");
             }
         }
 
-        // Função para remover uma função da tabela
-        function removeFunction(role) {
-            if (confirm(`Tem certeza que deseja remover a função "${role}"?`)) {
-                const index = roles.indexOf(role);
+        function addFunctionMOI() {
+            const newRole = prompt("Digite o nome da nova função (MOI):");
+            if (newRole && newRole.trim() !== "") {
+                const formattedRole = newRole.toUpperCase();
+                if (!rolesMOI.includes(formattedRole)) {
+                    rolesMOI.push(formattedRole);
+                    addRoleToTable(formattedRole, rolesMOIContainer, 'MOI', 'removeFunctionMOI');
+                } else {
+                    alert("Essa função já existe na MOI.");
+                }
+            }
+        }
+
+        function removeFunctionMOD(role) {
+            if (confirm(`Remover função MOD "${role}"?`)) {
+                const index = rolesMOD.indexOf(role);
                 if (index > -1) {
-                    roles.splice(index, 1); // Remove a função do array
-                    const row = document.getElementById(`row-${role}`);
-                    if (row) {
-                        rolesContainer.removeChild(row); // Remove a linha da tabela
-                    }
+                    rolesMOD.splice(index, 1);
+                    const row = document.getElementById(`row-MOD-${role}`);
+                    if (row) rolesMODContainer.removeChild(row);
                 }
             }
         }
 
-        // Função para gerar a lista formatada
-        function generateList() {
-            let totalPresent = 0;
-            let totalAbsent = 0;
-            let presentList = "*Efetivo Presente:*\n";
-            let absentList = "*Efetivo Ausente:*\n";
-            
-            const today = new Date();
-            const formattedDate = today.toLocaleDateString('pt-BR', {
-                day: '2-digit',
-                month: '2-digit',
-                year: 'numeric',
-            });
+        function removeFunctionMOI(role) {
+            if (confirm(`Remover função MOI "${role}"?`)) {
+                const index = rolesMOI.indexOf(role);
+                if (index > -1) {
+                    rolesMOI.splice(index, 1);
+                    const row = document.getElementById(`row-MOI-${role}`);
+                    if (row) rolesMOIContainer.removeChild(row);
+                }
+            }
+        }
 
-            roles.forEach(role => {
-                const presente = parseInt(document.getElementById(role + '_presente').value) || 0;
-                const ausente = parseInt(document.getElementById(role + '_ausente').value) || 0;
+        function generateList() {
+            let totalPresent = 0, totalAbsent = 0;
+            let presentListMOD = "*Efetivo Presente (MOD):*\n";
+            let absentListMOD = "*Efetivo Ausente (MOD):*\n";
+            let presentListMOI = "*Efetivo Presente (MOI):*\n";
+            let absentListMOI = "*Efetivo Ausente (MOI):*\n";
+
+            const today = new Date();
+            const formattedDate = today.toLocaleDateString('pt-BR');
+
+            // MOD
+            rolesMOD.forEach(role => {
+                const presente = parseInt(document.getElementById(`MOD_${role}_presente`).value) || 0;
+                const ausente = parseInt(document.getElementById(`MOD_${role}_ausente`).value) || 0;
 
                 if (presente > 0) {
-                    presentList += `${role}: ${presente}\n`;
+                    presentListMOD += `${role}: ${presente}\n`;
                     totalPresent += presente;
                 }
-
                 if (ausente > 0) {
-                    absentList += `${role}: ${ausente}\n`;
+                    absentListMOD += `${role}: ${ausente}\n`;
                     totalAbsent += ausente;
                 }
             });
 
-            const resultText = `*Efetivo Diário - TERPAZ VISEU (${formattedDate})*\n\n${presentList}\n${absentList}\n*Resumo*\nTotal de pessoas presentes: ${totalPresent}\nTotal de pessoas ausentes: ${totalAbsent}\nTotal MOD (presentes + ausentes): ${totalPresent + totalAbsent}`;
+            // MOI
+            rolesMOI.forEach(role => {
+                const presente = parseInt(document.getElementById(`MOI_${role}_presente`).value) || 0;
+                const ausente = parseInt(document.getElementById(`MOI_${role}_ausente`).value) || 0;
+
+                if (presente > 0) {
+                    presentListMOI += `${role}: ${presente}\n`;
+                    totalPresent += presente;
+                }
+                if (ausente > 0) {
+                    absentListMOI += `${role}: ${ausente}\n`;
+                    totalAbsent += ausente;
+                }
+            });
+
+            const resultText = `*Efetivo Diário - TERPAZ VISEU (${formattedDate})*\n\n${presentListMOD}\n${absentListMOD}\n${presentListMOI}\n${absentListMOI}\n*Resumo*\nTotal de pessoas presentes: ${totalPresent}\nTotal de pessoas ausentes: ${totalAbsent}\nTotal geral (MOD + MOI): ${totalPresent + totalAbsent}`;
+
             document.getElementById('result').value = resultText;
             document.getElementById('total').innerText = totalPresent;
         }
 
-        // Função para copiar o texto gerado
         function copyToClipboard() {
             const resultText = document.getElementById('result');
             resultText.select();
-            resultText.setSelectionRange(0, 99999); // Para dispositivos móveis
+            resultText.setSelectionRange(0, 99999);
             navigator.clipboard.writeText(resultText.value).then(() => {
                 alert("Texto copiado, agora é só colar no grupo de efetivo no WhatsApp!");
             });
         }
 
-        // Inicializar funções padrão
         populateRoles();
     </script>
 </body>
 </html>
-
